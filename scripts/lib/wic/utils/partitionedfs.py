@@ -131,6 +131,10 @@ class Image():
 
         self._partitions_layed_out = True
 
+        # The number of primary and logical partitions. Extended partition and
+        # partitions not listed in the table are not included.
+        num_real_partitions = len([p for p in self.partitions if not p['no_table']])
+
         # Go through partitions in the order they are added in .ks file
         for num in range(len(self.partitions)):
             part = self.partitions[num]
@@ -162,7 +166,7 @@ class Image():
                 # Skip one sector required for the partitioning scheme overhead
                 disk['offset'] += overhead
 
-            if disk['realpart'] > 3:
+            if disk['realpart'] > 3 and num_real_partitions > 4:
                 # Reserve a sector for EBR for every logical partition
                 # before alignment is performed.
                 if ptable_format == "msdos":
@@ -202,7 +206,7 @@ class Image():
 
             if disk['ptable_format'] == "msdos":
                 # only count the partitions that are in partition table
-                if len([p for p in self.partitions if not p['no_table']]) > 4:
+                if num_real_partitions > 4:
                     if disk['realpart'] > 3:
                         part['type'] = 'logical'
                         part['num'] = disk['realpart'] + 1
